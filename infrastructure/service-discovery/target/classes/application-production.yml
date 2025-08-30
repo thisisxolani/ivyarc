@@ -1,0 +1,42 @@
+spring:
+
+eureka:
+  instance:
+    hostname: ${EUREKA_HOSTNAME:eureka-server}
+    prefer-ip-address: true
+    ip-address: ${EUREKA_IP_ADDRESS:}
+    
+  server:
+    enable-self-preservation: true
+    renewal-percent-threshold: 0.85
+    eviction-interval-timer-in-ms: 15000
+    peer-node-read-timeout-ms: 2000
+    response-cache-update-interval-ms: 5000
+    
+  security:
+    enabled: true
+    username: ${EUREKA_USERNAME}
+    password: ${EUREKA_PASSWORD}
+
+logging:
+  level:
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN
+    org.springframework.security: WARN
+    com.company.auth: INFO
+  file:
+    name: logs/service-discovery.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  tracing:
+    sampling:
+      probability: 0.1
+
+server:
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20

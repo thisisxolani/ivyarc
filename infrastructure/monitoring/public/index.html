@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Cloud Auth - Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header .subtitle {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+        
+        .overall-status {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .status-up { 
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+        }
+        
+        .status-down { 
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
+        }
+        
+        .status-degraded { 
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
+        }
+        
+        .status-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 30px;
+        }
+        
+        .service-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 5px solid #ddd;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .service-card.up {
+            border-left-color: #4CAF50;
+        }
+        
+        .service-card.down {
+            border-left-color: #f44336;
+        }
+        
+        .service-card.unknown {
+            border-left-color: #ff9800;
+        }
+        
+        .service-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .service-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .service-icon {
+            font-size: 1.5em;
+        }
+        
+        .service-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .service-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .service-status.up {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .service-status.down {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .service-status.unknown {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .service-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .detail-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .detail-label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .service-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            grid-column: 1 / -1;
+        }
+        
+        .refresh-info {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+        }
+        
+        .last-updated {
+            font-weight: 500;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .metrics-section {
+            padding: 30px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .status-stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .service-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 System Monitoring Dashboard</h1>
+            <div class="subtitle">Spring Cloud Authentication System</div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('overview')">📊 Overview</div>
+            <div class="tab" onclick="showTab('services')">🛠️ Services</div>
+            <div class="tab" onclick="showTab('discovery')">🔍 Discovery</div>
+            <div class="tab" onclick="showTab('metrics')">📈 Metrics</div>
+        </div>
+        
+        <div id="overview" class="tab-content active">
+            <div class="overall-status">
+                <div id="overall-status-indicator" class="status-indicator loading">
+                    <div class="spinner"></div>
+                </div>
+                <h2 id="overall-status-text">Loading...</h2>
+                <div class="status-stats">
+                    <div class="stat">
+                        <div id="up-count" class="stat-number">-</div>
+                        <div class="stat-label">Services Up</div>
+                    </div>
+                    <div class="stat">
+                        <div id="down-count" class="stat-number">-</div>
+                        <div class="stat-label">Services Down</div>
+                    </div>
+                    <div class="stat">
+                        <div id="total-count" class="stat-number">-</div>
+                        <div class="stat-label">Total Services</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metrics-section">
+                <h3>📊 Quick Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div id="avg-response-time" class="metric-value">-</div>
+                        <div class="metric-label">Avg Response Time (ms)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div id="uptime-percentage" class="metric-value">-</div>
+                        <div class="metric-label">System Uptime</div>
+                    </div>
+                    <div class="metric-card">
+                        <div id="discovery-services" class="metric-value">-</div>
+                        <div class="metric-label">Discovered Services</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="services" class="tab-content">
+            <div id="services-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading services...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="discovery" class="tab-content">
+            <div class="metrics-section">
+                <h3>🔍 Service Discovery</h3>
+                <div id="discovery-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading discovery information...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="metrics" class="tab-content">
+            <div class="metrics-section">
+                <h3>📈 Detailed Metrics</h3>
+                <div id="metrics-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading metrics...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="refresh-info">
+            <div>Auto-refresh every 30 seconds | Last updated: <span id="last-updated" class="last-updated">Never</span></div>
+        </div>
+    </div>
+
+    <script>
+        let healthData = null;
+        let discoveryData = null;
+        
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to selected tab
+            event.target.classList.add('active');
+            
+            // Load tab-specific data
+            if (tabName === 'discovery') {
+                loadDiscoveryData();
+            } else if (tabName === 'metrics') {
+                loadMetrics();
+            }
+        }
+        
+        // Fetch health data
+        async function fetchHealthData() {
+            try {
+                const response = await fetch('/health');
+                if (!response.ok) throw new Error('Failed to fetch health data');
+                healthData = await response.json();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error fetching health data:', error);
+                showError('Failed to load health data: ' + error.message);
+            }
+        }
+        
+        // Fetch discovery data
+        async function loadDiscoveryData() {
+            try {
+                const response = await fetch('/services');
+                if (!response.ok) throw new Error('Failed to fetch discovery data');
+                discoveryData = await response.json();
+                updateDiscoveryDisplay();
+            } catch (error) {
+                console.error('Error fetching discovery data:', error);
+                document.getElementById('discovery-container').innerHTML = 
+                    '<div class="error-message">Failed to load discovery data: ' + error.message + '</div>';
+            }
+        }
+        
+        // Fetch metrics
+        async function loadMetrics() {
+            try {
+                const response = await fetch('/metrics');
+                if (!response.ok) throw new Error('Failed to fetch metrics');
+                const metricsText = await response.text();
+                updateMetricsDisplay(metricsText);
+            } catch (error) {
+                console.error('Error fetching metrics:', error);
+                document.getElementById('metrics-container').innerHTML = 
+                    '<div class="error-message">Failed to load metrics: ' + error.message + '</div>';
+            }
+        }
+        
+        // Update dashboard
+        function updateDashboard() {
+            if (!healthData) return;
+            
+            updateOverallStatus();
+            updateServicesGrid();
+            updateQuickMetrics();
+            updateLastUpdated();
+        }
+        
+        // Update overall status
+        function updateOverallStatus() {
+            const indicator = document.getElementById('overall-status-indicator');
+            const text = document.getElementById('overall-status-text');
+            const overall = healthData.overall;
+            
+            indicator.className = 'status-indicator status-' + overall.status.toLowerCase();
+            indicator.innerHTML = overall.status === 'UP' ? '✅' : 
+                                 overall.status === 'DOWN' ? '❌' : '⚠️';
+            
+            text.textContent = 'System Status: ' + overall.status;
+            
+            document.getElementById('up-count').textContent = overall.upCount;
+            document.getElementById('down-count').textContent = overall.downCount;
+            document.getElementById('total-count').textContent = overall.totalCount;
+        }
+        
+        // Update services grid
+        function updateServicesGrid() {
+            const container = document.getElementById('services-container');
+            
+            if (!healthData.services || healthData.services.length === 0) {
+                container.innerHTML = '<div class="error-message">No services found</div>';
+                return;
+            }
+            
+            container.innerHTML = '<div class="services-grid">' + 
+                healthData.services.map(service => createServiceCard(service)).join('') + 
+                '</div>';
+        }
+        
+        // Create service card
+        function createServiceCard(service) {
+            const status = service.health.status.toLowerCase();
+            const responseTime = service.health.responseTime || 0;
+            
+            let detailsHtml = `
+                <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">${service.health.status}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Response Time</div>
+                    <div class="detail-value">${responseTime}ms</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Type</div>
+                    <div class="detail-value">${service.type}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">URL</div>
+                    <div class="detail-value">${service.url}</div>
+                </div>
+            `;
+            
+            if (service.health.error) {
+                detailsHtml += `
+                    <div class="service-error">
+                        <strong>Error:</strong> ${service.health.error}
+                    </div>
+                `;
+            }
+            
+            // Add component details if available
+            if (service.health.components) {
+                Object.entries(service.health.components).forEach(([name, component]) => {
+                    if (component.status) {
+                        detailsHtml += `
+                            <div class="detail-item">
+                                <div class="detail-label">${name}</div>
+                                <div class="detail-value">${component.status}</div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            return `
+                <div class="service-card ${status}">
+                    <div class="service-header">
+                        <div class="service-title">
+                            <span class="service-icon">${service.icon}</span>
+                            <span class="service-name">${service.name}</span>
+                        </div>
+                        <span class="service-status ${status}">${service.health.status}</span>
+                    </div>
+                    <div class="service-details">
+                        ${detailsHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update quick metrics
+        function updateQuickMetrics() {
+            if (!healthData.services) return;
+            
+            // Calculate average response time
+            const responseTimes = healthData.services
+                .map(s => s.health.responseTime)
+                .filter(rt => rt > 0);
+            const avgResponseTime = responseTimes.length > 0 ? 
+                Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) : 0;
+            
+            document.getElementById('avg-response-time').textContent = avgResponseTime;
+            
+            // Calculate uptime percentage
+            const uptimePercentage = Math.round((healthData.overall.upCount / healthData.overall.totalCount) * 100);
+            document.getElementById('uptime-percentage').textContent = uptimePercentage + '%';
+            
+            // Discovery services count will be updated when discovery data is loaded
+        }
+        
+        // Update discovery display
+        function updateDiscoveryDisplay() {
+            if (!discoveryData) return;
+            
+            const container = document.getElementById('discovery-container');
+            
+            let html = '<h4>🔍 Discovered Services</h4>';
+            
+            if (discoveryData.discoveredServices && discoveryData.discoveredServices.length > 0) {
+                html += '<div class="services-grid">';
+                discoveryData.discoveredServices.forEach(service => {
+                    html += `
+                        <div class="service-card">
+                            <div class="service-header">
+                                <div class="service-title">
+                                    <span class="service-icon">📡</span>
+                                    <span class="service-name">${service.name}</span>
+                                </div>
+                                <span class="service-status up">${service.instanceCount} instances</span>
+                            </div>
+                            <div class="service-details">
+                                ${service.instances.map(instance => `
+                                    <div class="detail-item">
+                                        <div class="detail-label">Instance</div>
+                                        <div class="detail-value">${instance.hostName}:${instance.port.$}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else {
+                html += '<div class="error-message">No services discovered in Eureka</div>';
+            }
+            
+            html += '<h4>⚙️ Configured Services</h4>';
+            html += '<div class="services-grid">';
+            discoveryData.configuredServices.forEach(service => {
+                html += `
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-title">
+                                <span class="service-icon">🔧</span>
+                                <span class="service-name">${service.name}</span>
+                            </div>
+                            <span class="service-status unknown">${service.type}</span>
+                        </div>
+                        <div class="service-details">
+                            <div class="detail-item">
+                                <div class="detail-label">URL</div>
+                                <div class="detail-value">${service.url}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+            
+            // Update discovery count in quick metrics
+            document.getElementById('discovery-services').textContent = 
+                discoveryData.discoveredServices ? discoveryData.discoveredServices.length : 0;
+        }
+        
+        // Update metrics display
+        function updateMetricsDisplay(metricsText) {
+            const container = document.getElementById('metrics-container');
+            container.innerHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <h4>📊 Prometheus Metrics</h4>
+                    <pre style="background: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em;">${metricsText}</pre>
+                </div>
+            `;
+        }
+        
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        }
+        
+        // Show error message
+        function showError(message) {
+            const indicator = document.getElementById('overall-status-indicator');
+            const text = document.getElementById('overall-status-text');
+            
+            indicator.className = 'status-indicator status-down';
+            indicator.innerHTML = '❌';
+            text.textContent = 'Error loading status';
+            
+            document.getElementById('services-container').innerHTML = 
+                '<div class="error-message">' + message + '</div>';
+        }
+        
+        // Initialize dashboard
+        function init() {
+            fetchHealthData();
+            loadDiscoveryData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(fetchHealthData, 30000);
+            setInterval(loadDiscoveryData, 60000); // Less frequent for discovery
+        }
+        
+        // Start the dashboard
+        init();
+    </script>
+</body>
+</html>

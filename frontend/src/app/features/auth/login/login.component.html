@@ -1,0 +1,140 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <app-card>
+      <!-- Logo and Title -->
+      <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100">
+          <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          {{ isRegister() ? 'Create your account' : 'Sign in to your account' }}
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+          @if (isRegister()) {
+            Already have an account?
+            <a routerLink="/auth/login" class="font-medium text-primary-600 hover:text-primary-500">
+              Sign in
+            </a>
+          } @else {
+            Or
+            <a routerLink="/auth/register" class="font-medium text-primary-600 hover:text-primary-500">
+              create a new account
+            </a>
+          }
+        </p>
+      </div>
+
+      <!-- Error Alert -->
+      @if (authService.error()) {
+        <div class="bg-red-50 border border-red-200 rounded-md p-4">
+          <div class="flex">
+            <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <p class="ml-3 text-sm text-red-700">{{ authService.error() }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- Login Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Email/Username Field -->
+        <div>
+          <label for="identifier" class="block text-sm font-medium text-gray-700">
+            Email or Username
+          </label>
+          <div class="mt-1">
+            <input
+              id="identifier"
+              name="identifier"
+              type="text"
+              formControlName="identifier"
+              required
+              class="input-field"
+              placeholder="Enter your email or username"
+            />
+          </div>
+          @if (loginForm.get('identifier')?.touched && loginForm.get('identifier')?.errors) {
+            <p class="mt-2 text-sm text-red-600">Email or username is required</p>
+          }
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <div class="mt-1 relative">
+            <input
+              id="password"
+              name="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              required
+              class="input-field pr-10"
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center"
+              (click)="togglePassword()"
+            >
+              @if (showPassword()) {
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+              } @else {
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              }
+            </button>
+          </div>
+          @if (loginForm.get('password')?.touched && loginForm.get('password')?.errors) {
+            <p class="mt-2 text-sm text-red-600">Password is required</p>
+          }
+        </div>
+
+        <!-- Remember Me and Forgot Password -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <input
+              id="remember-me"
+              name="remember-me"
+              type="checkbox"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+              Remember me
+            </label>
+          </div>
+
+          <div class="text-sm">
+            <a href="#" class="font-medium text-primary-600 hover:text-primary-500">
+              Forgot your password?
+            </a>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <app-button
+          type="submit"
+          variant="primary"
+          [disabled]="loginForm.invalid"
+          [loading]="authService.isLoading()"
+          [fullWidth]="true"
+          (click)="onSubmit()"
+        >
+          @if (authService.isLoading()) {
+            {{ isRegister() ? 'Creating account...' : 'Signing in...' }}
+          } @else {
+            {{ isRegister() ? 'Create account' : 'Sign in' }}
+          }
+        </app-button>
+      </form>
+    </app-card>
+  </div>
+</div>

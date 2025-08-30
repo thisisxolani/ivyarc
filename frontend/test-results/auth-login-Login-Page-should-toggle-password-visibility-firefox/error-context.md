@@ -1,0 +1,73 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img [ref=e6]
+        - heading "Hello, auth-dashboard" [level=1] [ref=e10]
+        - paragraph [ref=e11]: Congratulations! Your app is running. 🎉
+      - separator "Divider" [ref=e12]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - link "Explore the Docs" [ref=e15] [cursor=pointer]:
+            - /url: https://angular.dev
+            - generic [ref=e16] [cursor=pointer]: Explore the Docs
+            - img [ref=e17] [cursor=pointer]
+          - link "Learn with Tutorials" [ref=e19] [cursor=pointer]:
+            - /url: https://angular.dev/tutorials
+            - generic [ref=e20] [cursor=pointer]: Learn with Tutorials
+            - img [ref=e21] [cursor=pointer]
+          - link "Prompt and best practices for AI" [ref=e23] [cursor=pointer]:
+            - /url: https://angular.dev/ai/develop-with-ai
+            - generic [ref=e24] [cursor=pointer]: Prompt and best practices for AI
+            - img [ref=e25] [cursor=pointer]
+          - link "CLI Docs" [ref=e27] [cursor=pointer]:
+            - /url: https://angular.dev/tools/cli
+            - generic [ref=e28] [cursor=pointer]: CLI Docs
+            - img [ref=e29] [cursor=pointer]
+          - link "Angular Language Service" [ref=e31] [cursor=pointer]:
+            - /url: https://angular.dev/tools/language-service
+            - generic [ref=e32] [cursor=pointer]: Angular Language Service
+            - img [ref=e33] [cursor=pointer]
+          - link "Angular DevTools" [ref=e35] [cursor=pointer]:
+            - /url: https://angular.dev/tools/devtools
+            - generic [ref=e36] [cursor=pointer]: Angular DevTools
+            - img [ref=e37] [cursor=pointer]
+        - generic [ref=e39]:
+          - link "Github" [ref=e40] [cursor=pointer]:
+            - /url: https://github.com/angular/angular
+            - img [ref=e41] [cursor=pointer]
+          - link "Twitter" [ref=e43] [cursor=pointer]:
+            - /url: https://twitter.com/angular
+            - img [ref=e44] [cursor=pointer]
+          - link "Youtube" [ref=e46] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCbn1OgGei-DV7aSRo_HaAiw
+            - img [ref=e47] [cursor=pointer]
+  - generic [ref=e54]:
+    - generic [ref=e55]:
+      - img [ref=e57]
+      - heading "Sign in to your account" [level=2] [ref=e59]
+      - paragraph [ref=e60]:
+        - text: Or
+        - link "create a new account" [ref=e61] [cursor=pointer]:
+          - /url: /auth/register
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]: Email or Username
+        - textbox "Email or Username" [ref=e66]
+      - generic [ref=e67]:
+        - generic [ref=e68]: Password
+        - generic [ref=e69]:
+          - textbox "Password" [ref=e70]
+          - button [ref=e71] [cursor=pointer]:
+            - img [ref=e72] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - checkbox "Remember me" [ref=e77]
+          - generic [ref=e78]: Remember me
+        - link "Forgot your password?" [ref=e80] [cursor=pointer]:
+          - /url: "#"
+      - button "Sign in" [disabled] [ref=e82]
+```

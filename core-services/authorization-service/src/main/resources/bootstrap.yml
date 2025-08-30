@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: authorization-service
+  cloud:
+    config:
+      enabled: ${CONFIG_SERVER_ENABLED:true}
+      uri: ${CONFIG_SERVER_URI:http://localhost:8888}
+      fail-fast: ${CONFIG_SERVER_FAIL_FAST:false}
+      retry:
+        initial-interval: 1000
+        max-attempts: 6
+        max-interval: 2000
+        multiplier: 1.1

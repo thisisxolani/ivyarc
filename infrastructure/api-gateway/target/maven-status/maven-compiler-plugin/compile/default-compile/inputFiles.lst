@@ -1,0 +1,8 @@
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/controller/FallbackController.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/filter/GlobalLoggingFilter.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/ApiGatewayApplication.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/service/JwtService.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/filter/AuthenticationFilter.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/filter/RateLimitKeyResolver.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/config/GatewayConfig.java
+/root/spring-cloud-auth-workspace/infrastructure/api-gateway/src/main/java/com/company/auth/gateway/filter/AuthorizationFilter.java

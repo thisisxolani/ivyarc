@@ -1,0 +1,108 @@
+# Audit Service specific configuration
+server:
+  port: 8084
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${DATABASE_USERNAME:auth_user}
+    password: ${DATABASE_PASSWORD:auth_password}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:validate}
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+  rabbitmq:
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+
+# Audit configuration
+audit:
+  logging:
+    enabled: ${AUDIT_LOGGING_ENABLED:true}
+    async: ${AUDIT_ASYNC_LOGGING:true}
+    buffer-size: ${AUDIT_BUFFER_SIZE:1000}
+    flush-interval: ${AUDIT_FLUSH_INTERVAL:5000} # 5 seconds
+    
+  retention:
+    default-days: ${AUDIT_RETENTION_DAYS:365}
+    security-events-days: ${SECURITY_AUDIT_RETENTION_DAYS:2555} # 7 years
+    system-events-days: ${SYSTEM_AUDIT_RETENTION_DAYS:90}
+    
+  fields:
+    capture-request-body: ${CAPTURE_REQUEST_BODY:true}
+    capture-response-body: ${CAPTURE_RESPONSE_BODY:false}
+    max-payload-size: ${MAX_AUDIT_PAYLOAD_SIZE:10240} # 10KB
+    sensitive-fields: password,token,secret,key,ssn,credit_card
+    
+  filtering:
+    exclude-paths: ${AUDIT_EXCLUDE_PATHS:/actuator/**,/health/**,/metrics/**}
+    exclude-methods: ${AUDIT_EXCLUDE_METHODS:OPTIONS}
+    include-only-authenticated: ${AUDIT_AUTHENTICATED_ONLY:false}
+
+# Security events configuration
+security:
+  events:
+    failed-login-threshold: ${FAILED_LOGIN_THRESHOLD:3}
+    suspicious-activity-threshold: ${SUSPICIOUS_ACTIVITY_THRESHOLD:10}
+    
+  alerts:
+    enabled: ${SECURITY_ALERTS_ENABLED:true}
+    email-recipients: ${SECURITY_ALERT_EMAILS:security@company.com}
+    slack-webhook: ${SECURITY_SLACK_WEBHOOK:}
+    
+  monitoring:
+    real-time-alerts: ${REAL_TIME_ALERTS:true}
+    batch-analysis-interval: ${BATCH_ANALYSIS_INTERVAL:300000} # 5 minutes
+
+# Analytics configuration
+analytics:
+  enabled: ${ANALYTICS_ENABLED:true}
+  aggregation:
+    interval: ${ANALYTICS_INTERVAL:3600000} # 1 hour
+    retention-days: ${ANALYTICS_RETENTION_DAYS:90}
+    
+  metrics:
+    user-activity: ${TRACK_USER_ACTIVITY:true}
+    api-usage: ${TRACK_API_USAGE:true}
+    security-events: ${TRACK_SECURITY_EVENTS:true}
+    performance: ${TRACK_PERFORMANCE:true}
+
+# Compliance configuration
+compliance:
+  gdpr:
+    enabled: ${GDPR_COMPLIANCE:true}
+    data-retention-days: ${GDPR_RETENTION_DAYS:365}
+    
+  pci:
+    enabled: ${PCI_COMPLIANCE:false}
+    mask-sensitive-data: ${PCI_MASK_DATA:true}
+    
+  hipaa:
+    enabled: ${HIPAA_COMPLIANCE:false}
+    encryption-required: ${HIPAA_ENCRYPTION:true}
+
+# Export configuration
+export:
+  formats: ${EXPORT_FORMATS:json,csv,excel}
+  max-records: ${MAX_EXPORT_RECORDS:10000}
+  async-threshold: ${ASYNC_EXPORT_THRESHOLD:1000}
+  
+logging:
+  level:
+    com.company.auth.auditservice: DEBUG
+    org.springframework.data.jpa: INFO
+    org.springframework.amqp: INFO

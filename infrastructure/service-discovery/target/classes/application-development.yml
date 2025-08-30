@@ -1,0 +1,25 @@
+eureka:
+  server:
+    enable-self-preservation: false
+    renewal-percent-threshold: 0.49
+    eviction-interval-timer-in-ms: 5000
+    response-cache-update-interval-ms: 1000
+    
+  security:
+    enabled: false
+
+logging:
+  level:
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
+    org.springframework.security: DEBUG
+    com.company.auth: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    sampling:
+      probability: 1.0

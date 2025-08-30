@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: spring-auth-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Main configuration (HTTPS over IP)
+      - ./ip-https.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Additional configuration files
+      - ./conf.d:/etc/nginx/conf.d/includes:ro
+      # SSL certificates
+      - ./ssl:/etc/ssl/nginx:ro
+      # Logs
+      - ./logs:/var/log/nginx
+      # Error pages
+      - /var/www/html:/var/www/html:ro
+    networks:
+      - spring-auth-network
+    depends_on:
+      - frontend
+      - api-gateway
+      - auth-service
+      - eureka-server
+      - config-server
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/nginx-status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  spring-auth-network:
+    external: true
+
+# Note: This docker-compose assumes your Spring services are running 
+# either on the host or in separate containers with proper networking

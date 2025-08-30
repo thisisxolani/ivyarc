@@ -1,0 +1,101 @@
+# Auth Service specific configuration
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:authdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:create-drop}
+    show-sql: ${SHOW_SQL:true}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope: openid,profile,email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          github:
+            client-id: ${GITHUB_CLIENT_ID:}
+            client-secret: ${GITHUB_CLIENT_SECRET:}
+            scope: user:email
+
+# JWT Configuration
+security:
+  jwt:
+    secret: ${JWT_SECRET:my-secret-key-change-in-production-must-be-at-least-256-bits}
+    expiration: ${JWT_EXPIRATION:86400000} # 24 hours
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
+    issuer: ${JWT_ISSUER:auth-service}
+    audience: ${JWT_AUDIENCE:api-gateway,user-service,authorization-service}
+    
+# Password policy
+password:
+  policy:
+    min-length: 8
+    require-uppercase: true
+    require-lowercase: true
+    require-numbers: true
+    require-special-chars: true
+    max-attempts: 5
+    lockout-duration: 300000 # 5 minutes
+
+# Session configuration
+session:
+  timeout: ${SESSION_TIMEOUT:1800000} # 30 minutes
+  max-concurrent: ${MAX_CONCURRENT_SESSIONS:3}
+  cleanup-interval: ${SESSION_CLEANUP_INTERVAL:300000} # 5 minutes
+
+# Email configuration
+mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+
+# Account verification
+account:
+  verification:
+    token-expiration: ${VERIFICATION_TOKEN_EXPIRATION:86400000} # 24 hours
+    email-template: verification-email
+    
+# Password reset
+password-reset:
+  token-expiration: ${PASSWORD_RESET_TOKEN_EXPIRATION:1800000} # 30 minutes
+  email-template: password-reset-email
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.company.auth.authservice: DEBUG
+    org.hibernate.SQL: ${SQL_LOGGING:INFO}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_PARAM_LOGGING:INFO}

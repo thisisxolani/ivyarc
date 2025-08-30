@@ -1,0 +1,77 @@
+# User Service specific configuration
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${DATABASE_USERNAME:auth_user}
+    password: ${DATABASE_PASSWORD:auth_password}
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 3
+      
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:validate}
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000 # 30 minutes
+
+# User management configuration
+user:
+  management:
+    allow-self-registration: ${ALLOW_SELF_REGISTRATION:true}
+    require-email-verification: ${REQUIRE_EMAIL_VERIFICATION:true}
+    default-role: ${DEFAULT_ROLE:USER}
+    
+  profile:
+    max-profile-image-size: ${MAX_PROFILE_IMAGE_SIZE:5242880} # 5MB
+    allowed-image-types: ${ALLOWED_IMAGE_TYPES:image/jpeg,image/png,image/gif}
+    
+  search:
+    max-results: ${MAX_SEARCH_RESULTS:50}
+    fuzzy-search-enabled: ${FUZZY_SEARCH_ENABLED:true}
+    
+  pagination:
+    default-page-size: ${DEFAULT_PAGE_SIZE:20}
+    max-page-size: ${MAX_PAGE_SIZE:100}
+
+# Account policies
+account:
+  lockout:
+    max-failed-attempts: ${MAX_FAILED_ATTEMPTS:5}
+    lockout-duration: ${LOCKOUT_DURATION:900000} # 15 minutes
+    
+  inactive:
+    warning-days: ${INACTIVE_WARNING_DAYS:30}
+    deactivation-days: ${INACTIVE_DEACTIVATION_DAYS:90}
+    
+  password:
+    history-count: ${PASSWORD_HISTORY_COUNT:5}
+    expiration-days: ${PASSWORD_EXPIRATION_DAYS:90}
+    
+# Audit configuration
+audit:
+  user-actions:
+    enabled: ${AUDIT_USER_ACTIONS:true}
+    sensitive-fields: password,ssn,credit_card
+    retention-days: ${AUDIT_RETENTION_DAYS:365}
+
+# Notification settings
+notifications:
+  email:
+    welcome-enabled: ${WELCOME_EMAIL_ENABLED:true}
+    profile-changes: ${PROFILE_CHANGE_NOTIFICATIONS:true}
+    security-alerts: ${SECURITY_ALERT_NOTIFICATIONS:true}
+
+logging:
+  level:
+    com.company.auth.userservice: DEBUG
+    org.springframework.data.jpa: INFO
