@@ -1,0 +1,338 @@
+version: '3.8'
+
+# =============================================================================
+# IvyArc Spring Cloud Services Docker Compose Configuration
+# =============================================================================
+# This file defines all the Spring Boot microservices
+# Use together with docker-compose.infrastructure.yml
+
+services:
+  # =============================================================================
+  # INFRASTRUCTURE SERVICES
+  # =============================================================================
+
+  # Eureka Service Discovery
+  eureka-server:
+    build:
+      context: ./infrastructure/service-discovery
+      dockerfile: Dockerfile
+    container_name: ivyarc-eureka-server
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: false
+      EUREKA_CLIENT_FETCH_REGISTRY: false
+      EUREKA_SERVER_ENABLE_SELF_PRESERVATION: false
+    ports:
+      - "${EUREKA_SERVER_PORT:-8761}:8761"
+    networks:
+      - ivyarc-network
+    volumes:
+      - ./logs/eureka:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.eureka.rule=Host(`eureka.localhost`)"
+      - "traefik.http.services.eureka.loadbalancer.server.port=8761"
+
+  # Configuration Server
+  config-server:
+    build:
+      context: ./infrastructure/config-server
+      dockerfile: Dockerfile
+    container_name: ivyarc-config-server
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_SERVER_GIT_URI:-https://github.com/your-org/ivyarc-config.git}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${CONFIG_SERVER_GIT_USERNAME:-}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${CONFIG_SERVER_GIT_PASSWORD:-}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: main
+    ports:
+      - "${CONFIG_SERVER_PORT:-8888}:8888"
+    networks:
+      - ivyarc-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    volumes:
+      - ./logs/config-server:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.config.rule=Host(`config.localhost`)"
+      - "traefik.http.services.config.loadbalancer.server.port=8888"
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./infrastructure/api-gateway
+      dockerfile: Dockerfile
+    container_name: ivyarc-api-gateway
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      ZIPKIN_BASE_URL: http://zipkin:9411
+    ports:
+      - "${API_GATEWAY_PORT:-8080}:8080"
+    networks:
+      - ivyarc-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs/api-gateway:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-gateway.rule=Host(`api.localhost`)"
+      - "traefik.http.services.api-gateway.loadbalancer.server.port=8080"
+
+  # =============================================================================
+  # CORE SERVICES
+  # =============================================================================
+
+  # Authentication Service
+  auth-service:
+    build:
+      context: ./core-services/auth-service
+      dockerfile: Dockerfile
+    container_name: ivyarc-auth-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8081
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: auth_user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-auth_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin123}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST:-ivyarc}
+      ZIPKIN_BASE_URL: http://zipkin:9411
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-86400000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+    ports:
+      - "${AUTH_SERVICE_PORT:-8081}:8081"
+    networks:
+      - ivyarc-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./logs/auth-service:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth.localhost`)"
+      - "traefik.http.services.auth.loadbalancer.server.port=8081"
+
+  # Authorization Service
+  authorization-service:
+    build:
+      context: ./core-services/authorization-service
+      dockerfile: Dockerfile
+    container_name: ivyarc-authorization-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8082
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/authorization_db
+      SPRING_DATASOURCE_USERNAME: authorization_user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-authorization_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin123}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST:-ivyarc}
+      ZIPKIN_BASE_URL: http://zipkin:9411
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "${AUTHORIZATION_SERVICE_PORT:-8082}:8082"
+    networks:
+      - ivyarc-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./logs/authorization-service:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authorization.rule=Host(`authz.localhost`)"
+      - "traefik.http.services.authorization.loadbalancer.server.port=8082"
+
+  # User Management Service
+  user-management-service:
+    build:
+      context: ./core-services/user-management-service
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/user-management-service-*.jar
+    container_name: ivyarc-user-management-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8083
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_management_db
+      SPRING_DATASOURCE_USERNAME: user_management_user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-user_management_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin123}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST:-ivyarc}
+      ZIPKIN_BASE_URL: http://zipkin:9411
+    ports:
+      - "${USER_MANAGEMENT_SERVICE_PORT:-8083}:8083"
+    networks:
+      - ivyarc-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./logs/user-management-service:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.users.rule=Host(`users.localhost`)"
+      - "traefik.http.services.users.loadbalancer.server.port=8083"
+
+  # Audit Service
+  audit-service:
+    build:
+      context: ./core-services/audit-service
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/audit-service-*.jar
+    container_name: ivyarc-audit-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-development}
+      SERVER_PORT: 8084
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/audit_db
+      SPRING_DATASOURCE_USERNAME: audit_user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-audit_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin123}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST:-ivyarc}
+      ZIPKIN_BASE_URL: http://zipkin:9411
+    ports:
+      - "${AUDIT_SERVICE_PORT:-8084}:8084"
+    networks:
+      - ivyarc-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./logs/audit-service:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.audit.rule=Host(`audit.localhost`)"
+      - "traefik.http.services.audit.loadbalancer.server.port=8084"
+
+# Use external network defined in infrastructure compose file
+networks:
+  ivyarc-network:
+    external: true

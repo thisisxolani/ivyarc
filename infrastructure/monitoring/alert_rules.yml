@@ -1,0 +1,251 @@
+# =============================================================================
+# Prometheus Alert Rules for IvyArc Spring Cloud Microservices
+# =============================================================================
+
+groups:
+  - name: ivyarc.services
+    rules:
+      # Service Health Alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} on instance {{ $labels.instance }} has been down for more than 30 seconds."
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_server_requests_seconds_count{status=~"5.."}[5m]) /
+            rate(http_server_requests_seconds_count[5m])
+          ) * 100 > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: errors
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value }}% on {{ $labels.job }} for the last 5 minutes."
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High latency on {{ $labels.job }}"
+          description: "95th percentile latency is {{ $value }}s on {{ $labels.job }}."
+
+  - name: ivyarc.infrastructure
+    rules:
+      # Database Alerts
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 30s
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is not responding."
+
+      - alert: PostgreSQLHighConnections
+        expr: |
+          (
+            pg_stat_database_numbackends / 
+            pg_settings_max_connections
+          ) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "PostgreSQL high connection usage"
+          description: "PostgreSQL is using {{ $value }}% of available connections."
+
+      - alert: PostgreSQLSlowQueries
+        expr: pg_stat_statements_mean_time_ms > 1000
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "Average query time is {{ $value }}ms."
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 30s
+        labels:
+          severity: critical
+          category: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache server is not responding."
+
+      - alert: RedisHighMemoryUsage
+        expr: |
+          (
+            redis_memory_used_bytes / 
+            redis_memory_max_bytes
+          ) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: cache
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is {{ $value }}%."
+
+      - alert: RedisHighLatency
+        expr: redis_latency_percentiles_usec{quantile="0.99"} > 100000
+        for: 5m
+        labels:
+          severity: warning
+          category: cache
+        annotations:
+          summary: "Redis high latency"
+          description: "Redis 99th percentile latency is {{ $value }}μs."
+
+      # RabbitMQ Alerts
+      - alert: RabbitMQDown
+        expr: rabbitmq_up == 0
+        for: 30s
+        labels:
+          severity: critical
+          category: messaging
+        annotations:
+          summary: "RabbitMQ is down"
+          description: "RabbitMQ message broker is not responding."
+
+      - alert: RabbitMQHighQueueSize
+        expr: rabbitmq_queue_messages > 1000
+        for: 5m
+        labels:
+          severity: warning
+          category: messaging
+        annotations:
+          summary: "RabbitMQ queue size is high"
+          description: "Queue {{ $labels.queue }} has {{ $value }} messages."
+
+      - alert: RabbitMQHighMemoryUsage
+        expr: |
+          (
+            rabbitmq_node_mem_used / 
+            rabbitmq_node_mem_limit
+          ) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: messaging
+        annotations:
+          summary: "RabbitMQ high memory usage"
+          description: "RabbitMQ memory usage is {{ $value }}%."
+
+  - name: ivyarc.security
+    rules:
+      # Security Alerts
+      - alert: HighFailedAuthRate
+        expr: |
+          rate(auth_failed_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High failed authentication rate"
+          description: "Failed authentication rate is {{ $value }} attempts/second."
+
+      - alert: SuspiciousUserActivity
+        expr: |
+          rate(user_suspicious_activity_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Suspicious user activity detected"
+          description: "Suspicious activity rate is {{ $value }} events/second."
+
+  - name: ivyarc.business
+    rules:
+      # Business Logic Alerts
+      - alert: LowUserRegistrationRate
+        expr: |
+          rate(user_registrations_total[1h]) < 0.1
+        for: 30m
+        labels:
+          severity: info
+          category: business
+        annotations:
+          summary: "Low user registration rate"
+          description: "User registration rate is {{ $value }} registrations/hour."
+
+      - alert: HighAPIUsage
+        expr: |
+          rate(http_server_requests_seconds_count[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+          category: business
+        annotations:
+          summary: "High API usage on {{ $labels.job }}"
+          description: "API request rate is {{ $value }} requests/second on {{ $labels.job }}."
+
+  - name: ivyarc.system
+    rules:
+      # System Resource Alerts
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+          ) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: LowDiskSpace
+        expr: |
+          (
+            1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)
+          ) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }} ({{ $labels.mountpoint }})."
+
+      - alert: HighNetworkTraffic
+        expr: |
+          rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m]) > 104857600  # 100MB/s
+        for: 10m
+        labels:
+          severity: info
+          category: system
+        annotations:
+          summary: "High network traffic on {{ $labels.instance }}"
+          description: "Network traffic is {{ $value }} bytes/second on {{ $labels.instance }} ({{ $labels.device }})."

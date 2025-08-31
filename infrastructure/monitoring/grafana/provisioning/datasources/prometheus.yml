@@ -1,0 +1,66 @@
+# =============================================================================
+# Grafana Datasource Configuration for IvyArc Monitoring
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    uid: prometheus_uid
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      alertmanagerUid: alertmanager_uid
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: '10m'
+      exemplarTraceIdDestinations:
+        - name: traceID
+          datasourceUid: jaeger_uid
+          url: 'http://zipkin:9411/zipkin/traces/${__value.raw}'
+    secureJsonFields:
+      httpHeaderValue1: false
+    version: 1
+
+  - name: Zipkin
+    type: zipkin
+    access: proxy
+    url: http://zipkin:9411
+    uid: zipkin_uid
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: 'loki_uid'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags:
+          - key: 'service.name'
+            value: 'service'
+        filterByTraceID: false
+        filterBySpanID: false
+        customQuery: true
+        query: '{service="${__span.tags.service}"} |= "${__span.traceId}"'
+      tracesToMetrics:
+        datasourceUid: 'prometheus_uid'
+        tags:
+          - key: 'service.name'
+            value: 'service'
+          - key: 'job'
+            value: 'job'
+        queries:
+          - name: 'Sample query'
+            query: 'histogram_quantile(0.5, sum(rate(http_server_requests_seconds_bucket{service="${service}"}[5m])) by (le))'
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      spanBar:
+        type: 'Tag'
+        tag: 'http.path'
+    version: 1

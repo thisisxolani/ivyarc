@@ -1,6 +1,6 @@
 -- Create permissions table
 CREATE TABLE permissions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     resource VARCHAR(50) NOT NULL,
     action VARCHAR(50) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE permissions (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_system BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for better performance
@@ -59,3 +59,7 @@ INSERT INTO permissions (name, resource, action, description, is_active, is_syst
 
 -- Super admin permission (grants all access)
 ('*:*', '*', '*', 'All permissions for all resources', TRUE, TRUE);
+
+-- Create trigger for updated_at
+CREATE TRIGGER update_permissions_updated_at BEFORE UPDATE ON permissions
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

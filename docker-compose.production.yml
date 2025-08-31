@@ -1,0 +1,295 @@
+version: '3.8'
+
+# =============================================================================
+# IvyArc Production Override Configuration
+# =============================================================================
+# This file provides production-specific overrides
+# Usage: docker-compose -f docker-compose.infrastructure.yml -f docker-compose.production.yml up -d
+
+services:
+  # PostgreSQL with production settings
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=400
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c maintenance_work_mem=256MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=64MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=8MB
+      -c min_wal_size=2GB
+      -c max_wal_size=8GB
+      -c log_statement=none
+      -c log_min_duration_statement=5000
+      -c log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+      -c log_checkpoints=on
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_lock_waits=on
+      -c log_temp_files=0
+      -c log_autovacuum_min_duration=0
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/database/init:/docker-entrypoint-initdb.d:ro
+      - ./infrastructure/database/backups:/backups
+      - /var/log/postgresql:/var/log/postgresql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Redis with production configuration
+  redis:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/redis/redis-prod.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # RabbitMQ with production settings
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-ivyarc}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: >
+        -rabbit log_levels [{connection,error},{default,warning}]
+        -rabbit disk_free_limit {mem_relative, 0.4}
+        -rabbit vm_memory_high_watermark 0.5
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./infrastructure/rabbitmq/rabbitmq-prod.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - /var/log/rabbitmq:/var/log/rabbitmq
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Prometheus with production retention and storage
+  prometheus:
+    volumes:
+      - prometheus_data:/prometheus
+      - ./infrastructure/monitoring/prometheus-prod.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=180d'
+      - '--storage.tsdb.retention.size=50GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.external-url=https://prometheus.yourdomain.com'
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Grafana with production settings
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_SERVER_ROOT_URL: https://grafana.yourdomain.com
+      GF_SECURITY_SECRET_KEY: ${GRAFANA_SECRET_KEY}
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: postgres:5432
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_USER: grafana_user
+      GF_DATABASE_PASSWORD: ${GRAFANA_DB_PASSWORD}
+      GF_SESSION_PROVIDER: redis
+      GF_SESSION_PROVIDER_CONFIG: addr=redis:6379,pool_size=100,prefix=grafana:session:
+      GF_INSTALL_PLUGINS: >
+        grafana-piechart-panel,
+        grafana-worldmap-panel,
+        grafana-clock-panel,
+        grafana-simple-json-datasource,
+        alexanderzobnin-zabbix-app
+      GF_SMTP_ENABLED: true
+      GF_SMTP_HOST: ${SMTP_HOST}:${SMTP_PORT}
+      GF_SMTP_USER: ${SMTP_USER}
+      GF_SMTP_PASSWORD: ${SMTP_PASSWORD}
+      GF_SMTP_FROM_ADDRESS: grafana@yourdomain.com
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Zipkin with production storage
+  zipkin:
+    environment:
+      STORAGE_TYPE: mysql
+      MYSQL_HOST: zipkin-mysql
+      MYSQL_USER: zipkin
+      MYSQL_PASS: ${ZIPKIN_DB_PASSWORD}
+      MYSQL_DB: zipkin
+      JAVA_OPTS: "-Xms1g -Xmx2g -XX:+UseG1GC"
+    depends_on:
+      - zipkin-mysql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Dedicated MySQL for Zipkin (production)
+  zipkin-mysql:
+    image: mysql:8.0
+    container_name: ivyarc-zipkin-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ZIPKIN_MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: zipkin
+      MYSQL_PASSWORD: ${ZIPKIN_DB_PASSWORD}
+      MYSQL_DATABASE: zipkin
+    volumes:
+      - zipkin_mysql_data:/var/lib/mysql
+    networks:
+      - ivyarc-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Alertmanager for production alerts
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: ivyarc-alertmanager
+    restart: always
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    volumes:
+      - alertmanager_data:/alertmanager
+      - ./infrastructure/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - ivyarc-network
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://alerts.yourdomain.com'
+    environment:
+      SMTP_SMARTHOST: ${SMTP_HOST}:${SMTP_PORT}
+      SMTP_FROM: alerts@yourdomain.com
+      SMTP_AUTH_USERNAME: ${SMTP_USER}
+      SMTP_AUTH_PASSWORD: ${SMTP_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: ivyarc-node-exporter
+    restart: always
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - ivyarc-network
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Remove MailDev in production
+  maildev:
+    profiles:
+      - development
+      - local
+
+volumes:
+  zipkin_mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/zipkin-mysql
+  alertmanager_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/alertmanager
+
+# Production-specific network configuration
+networks:
+  ivyarc-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+    driver_opts:
+      com.docker.network.bridge.name: br-ivyarc-prod
+      com.docker.network.driver.mtu: 1500
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.bridge.enable_icc: "true"

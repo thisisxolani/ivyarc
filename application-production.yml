@@ -1,0 +1,248 @@
+# Production configuration for IvyArc Spring Cloud
+# This configuration ensures all data persists across service restarts
+
+spring:
+  profiles:
+    active: production
+  
+  # Enhanced database configuration with connection pooling
+  datasource:
+    hikari:
+      # Connection pool settings
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 600000      # 10 minutes
+      max-lifetime: 1800000     # 30 minutes
+      connection-timeout: 30000 # 30 seconds
+      validation-timeout: 5000  # 5 seconds
+      leak-detection-threshold: 60000 # 1 minute
+      # Connection validation
+      connection-test-query: SELECT 1
+      connection-init-sql: SET TIME ZONE 'UTC'
+  
+  # JPA/Hibernate production settings
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Never auto-create in production
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        use_sql_comments: false
+        # Performance optimizations
+        jdbc:
+          batch_size: 25
+          order_inserts: true
+          order_updates: true
+          batch_versioned_data: true
+        # Second-level cache (with Redis)
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.redis.hibernate6.RedisRegionFactory
+        # Connection handling
+        connection:
+          provider_disables_autocommit: true
+        # Query optimization
+        query:
+          substitutions: true=1,false=0
+    open-in-view: false
+  
+  # Flyway migration settings
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    repair: false
+    out-of-order: false
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    baseline-version: 0
+    target: latest
+    
+  # Redis configuration for caching and sessions
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 2000ms
+    ssl: ${REDIS_SSL:false}
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1ms
+        time-between-eviction-runs: 60s
+      cluster:
+        refresh:
+          period: 30s
+          adaptive: true
+    
+  # Session management with Redis
+  session:
+    store-type: redis
+    timeout: 1800s # 30 minutes
+    redis:
+      namespace: "ivyarc:session"
+      flush-mode: on_save
+      save-mode: on_set_attribute
+    
+  # RabbitMQ configuration
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:rabbitmq_user}
+    password: ${RABBITMQ_PASSWORD:}
+    virtual-host: ${RABBITMQ_VHOST:ivyarc}
+    connection-timeout: 30s
+    requested-heartbeat: 60s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+      retry:
+        enabled: true
+        initial-interval: 1000ms
+        max-attempts: 5
+        max-interval: 10000ms
+        multiplier: 2.0
+
+# Eureka production configuration
+eureka:
+  instance:
+    prefer-ip-address: false
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    metadata-map:
+      version: ${app.version:1.0.0}
+      environment: ${spring.profiles.active}
+      zone: ${eureka.instance.availability-zone:us-east-1a}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+    registry-fetch-interval-seconds: 30
+    instance-info-replication-interval-seconds: 30
+    initial-instance-info-replication-interval-seconds: 40
+    heartbeat-executor-thread-pool-size: 5
+    cache-refresh-executor-thread-pool-size: 5
+
+# Management and monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,redis,rabbit
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    rabbit:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 100MB
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+        spring:
+          data:
+            repository:
+              invocations: true
+  info:
+    env:
+      enabled: true
+    git:
+      enabled: true
+      mode: full
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+    zipkin:
+      tracing:
+        endpoint: ${ZIPKIN_URL:http://localhost:9411/api/v2/spans}
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.company.auth: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    com.zaxxer.hikari: WARN
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 30
+
+# Security configuration
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration-ms: 900000    # 15 minutes
+    refresh-token-expiration-ms: 86400000 # 24 hours
+    issuer: ${JWT_ISSUER:ivyarc-auth-service}
+    audience: ${JWT_AUDIENCE:ivyarc-services}
+  
+# Application-specific configuration
+app:
+  version: ${BUILD_VERSION:1.0.0}
+  environment: ${DEPLOYMENT_ENVIRONMENT:production}
+  
+  # Database backup settings
+  backup:
+    enabled: ${BACKUP_ENABLED:true}
+    schedule: ${BACKUP_SCHEDULE:0 2 * * *} # Daily at 2 AM
+    retention-days: ${BACKUP_RETENTION_DAYS:30}
+    
+  # Cache configuration
+  cache:
+    default-ttl: 3600000 # 1 hour
+    user-cache-ttl: 1800000 # 30 minutes
+    role-cache-ttl: 3600000 # 1 hour
+    permission-cache-ttl: 7200000 # 2 hours
+    
+  # Session management
+  session:
+    max-concurrent-sessions: ${MAX_CONCURRENT_SESSIONS:5}
+    session-cleanup-interval: ${SESSION_CLEANUP_INTERVAL:300000} # 5 minutes
+    
+  # Rate limiting
+  rate-limiting:
+    enabled: ${RATE_LIMITING_ENABLED:true}
+    login-attempts-per-minute: ${LOGIN_RATE_LIMIT:5}
+    api-requests-per-minute: ${API_RATE_LIMIT:100}
+    
+  # Circuit breaker settings
+  circuit-breaker:
+    failure-rate-threshold: 50
+    wait-duration-in-open-state: 30s
+    sliding-window-size: 10
+    minimum-number-of-calls: 5

@@ -1,0 +1,151 @@
+{
+  "vhosts": [
+    {
+      "name": "ivyarc"
+    }
+  ],
+  "users": [
+    {
+      "name": "rabbitmq_user",
+      "password": "rabbitmq_secure_password",
+      "tags": "administrator"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "rabbitmq_user",
+      "vhost": "ivyarc",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "policies": [
+    {
+      "vhost": "ivyarc",
+      "name": "ha-all",
+      "pattern": ".*",
+      "apply-to": "all",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    }
+  ],
+  "queues": [
+    {
+      "name": "auth.events",
+      "vhost": "ivyarc",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-max-length": 10000
+      }
+    },
+    {
+      "name": "authorization.events",
+      "vhost": "ivyarc",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-max-length": 10000
+      }
+    },
+    {
+      "name": "user.events",
+      "vhost": "ivyarc",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-max-length": 10000
+      }
+    },
+    {
+      "name": "audit.events",
+      "vhost": "ivyarc",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 2592000000,
+        "x-max-length": 100000
+      }
+    },
+    {
+      "name": "notifications",
+      "vhost": "ivyarc",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-max-length": 1000
+      }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "ivyarc.events",
+      "vhost": "ivyarc",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ivyarc.notifications",
+      "vhost": "ivyarc",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "ivyarc.events",
+      "vhost": "ivyarc",
+      "destination": "auth.events",
+      "destination_type": "queue",
+      "routing_key": "auth.*",
+      "arguments": {}
+    },
+    {
+      "source": "ivyarc.events",
+      "vhost": "ivyarc",
+      "destination": "authorization.events",
+      "destination_type": "queue",
+      "routing_key": "authorization.*",
+      "arguments": {}
+    },
+    {
+      "source": "ivyarc.events",
+      "vhost": "ivyarc",
+      "destination": "user.events",
+      "destination_type": "queue",
+      "routing_key": "user.*",
+      "arguments": {}
+    },
+    {
+      "source": "ivyarc.events",
+      "vhost": "ivyarc",
+      "destination": "audit.events",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "ivyarc.notifications",
+      "vhost": "ivyarc",
+      "destination": "notifications",
+      "destination_type": "queue",
+      "routing_key": "notification",
+      "arguments": {}
+    }
+  ]
+}

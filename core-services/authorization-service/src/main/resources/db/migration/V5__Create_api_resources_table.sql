@@ -1,6 +1,6 @@
 -- Create api_resources table
 CREATE TABLE api_resources (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     service_name VARCHAR(50) NOT NULL,
     endpoint_pattern VARCHAR(200) NOT NULL,
     http_method VARCHAR(10) NOT NULL,
@@ -9,9 +9,9 @@ CREATE TABLE api_resources (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     priority INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (required_permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_api_resources (service_name, endpoint_pattern, http_method)
+    CONSTRAINT uk_api_resources UNIQUE (service_name, endpoint_pattern, http_method)
 );
 
 -- Create indexes for better performance
@@ -65,3 +65,7 @@ INSERT INTO api_resources (service_name, endpoint_pattern, http_method, required
 ('*', '/swagger-ui/**', 'GET', (SELECT id FROM permissions WHERE name = 'public:read'), 'Swagger UI', 0),
 ('*', '/h2-console/**', 'GET', (SELECT id FROM permissions WHERE name = 'system:admin'), 'H2 console access', 0),
 ('*', '/h2-console/**', 'POST', (SELECT id FROM permissions WHERE name = 'system:admin'), 'H2 console operations', 0);
+
+-- Create trigger for updated_at
+CREATE TRIGGER update_api_resources_updated_at BEFORE UPDATE ON api_resources
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
