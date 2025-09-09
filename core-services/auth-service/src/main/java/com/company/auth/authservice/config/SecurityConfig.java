@@ -65,7 +65,7 @@ public class SecurityConfig {
                         
                         // Health check and monitoring endpoints
                         .requestMatchers("/actuator/health", "/actuator/health/**", 
-                                "/actuator/info", "/actuator/prometheus").permitAll()
+                                "/actuator/info", "/actuator/health", "/actuator/prometheus").permitAll()
                         
                         // OpenAPI documentation
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", 
@@ -99,7 +99,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh", "/api/v1/auth/forgot-password", 
                                 "/api/v1/auth/reset-password").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", 
-                                "/actuator/info", "/actuator/prometheus").permitAll()
+                                "/actuator/info", "/actuator/health", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", 
                                 "/swagger-ui.html", "/swagger-resources/**", 
                                 "/webjars/**").permitAll()
