@@ -4,7 +4,7 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:development}
   config:
-    import: optional:configserver:http://localhost:8888
+    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://config-server:8888}
     
   # H2 configuration for test profile
   h2:
@@ -33,8 +33,7 @@ spring:
     
   sql:
     init:
-      mode: always
-      data-locations: classpath:data.sql
+      mode: never
       
 # Management endpoints
 management:
@@ -67,7 +66,7 @@ eureka:
   client:
     enabled: ${EUREKA_CLIENT_ENABLED:true}
     service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://eureka-server:8761/eureka}
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -94,3 +93,21 @@ jwt:
   secret: ${JWT_SECRET:mySecretKey}
   expiration: ${JWT_EXPIRATION:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+---
+# Development profile configuration
+spring:
+  config:
+    activate:
+      on-profile: development
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db:5432/authorization_db}
+    username: ${SPRING_DATASOURCE_USERNAME:authorization_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:auth_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect

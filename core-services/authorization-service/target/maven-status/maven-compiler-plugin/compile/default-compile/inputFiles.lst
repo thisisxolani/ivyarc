@@ -1,0 +1,16 @@
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/dto/RoleDto.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/entity/Role.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/AuthorizationServiceApplication.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/repository/PermissionRepository.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/dto/UserRoleDto.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/repository/ApiResourceRepository.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/dto/PermissionDto.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/entity/Permission.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/entity/ApiResource.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/dto/AuthorizationResponse.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/entity/UserRole.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/dto/ApiResponse.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/dto/AuthorizationRequest.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/repository/UserRoleRepository.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/service/RoleService.java
+/root/workspace/ivyarc/core-services/authorization-service/src/main/java/com/company/auth/authorization/repository/RoleRepository.java

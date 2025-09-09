@@ -1,6 +1,8 @@
-# AuthDashboard
+# Frontend (Angular)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.1.
+This README describes only the frontend application setup and workflows. It does not cover backend services or infrastructure.
+
+The project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.1.
 
 ## Development server
 
@@ -11,6 +13,8 @@ ng serve
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+
+API base URL configuration (if applicable) should be provided via environment files or runtime configuration. See `src/environments` or the project’s configuration service for details.
 
 ## Code scaffolding
 
@@ -57,3 +61,5 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+Note: For backend setup, refer to the backend documentation under `workspace/ivyarc/backend/`. This frontend README intentionally avoids backend instructions to prevent confusion.

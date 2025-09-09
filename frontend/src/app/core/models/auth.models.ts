@@ -31,19 +31,14 @@ export interface User {
   firstName: string;
   lastName: string;
   isVerified: boolean;
+  emailVerified: boolean;
+  status: string;
+  mfaEnabled: boolean;
   createdAt: string;
   roles?: string[];
   permissions?: string[];
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message: string;
-  timestamp: string;
-  path: string;
-  errors?: string[];
-}
 
 export interface AuthState {
   isAuthenticated: boolean;

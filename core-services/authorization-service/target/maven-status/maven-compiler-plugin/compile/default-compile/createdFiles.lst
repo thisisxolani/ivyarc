@@ -1,0 +1,16 @@
+com/company/auth/authorization/repository/PermissionRepository.class
+com/company/auth/authorization/repository/RoleRepository.class
+com/company/auth/authorization/entity/Permission.class
+com/company/auth/authorization/dto/ApiResponse.class
+com/company/auth/authorization/dto/RoleDto.class
+com/company/auth/authorization/dto/UserRoleDto.class
+com/company/auth/authorization/repository/UserRoleRepository.class
+com/company/auth/authorization/entity/ApiResource.class
+com/company/auth/authorization/dto/AuthorizationRequest.class
+com/company/auth/authorization/dto/AuthorizationResponse.class
+com/company/auth/authorization/dto/PermissionDto.class
+com/company/auth/authorization/entity/UserRole.class
+com/company/auth/authorization/repository/ApiResourceRepository.class
+com/company/auth/authorization/service/RoleService.class
+com/company/auth/authorization/AuthorizationServiceApplication.class
+com/company/auth/authorization/entity/Role.class

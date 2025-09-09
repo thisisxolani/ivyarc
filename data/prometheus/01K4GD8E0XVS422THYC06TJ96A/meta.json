@@ -1,0 +1,17 @@
+{
+	"ulid": "01K4GD8E0XVS422THYC06TJ96A",
+	"minTime": 1757181600504,
+	"maxTime": 1757188800000,
+	"stats": {
+		"numSamples": 404400,
+		"numSeries": 860,
+		"numChunks": 3371
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01K4GD8E0XVS422THYC06TJ96A"
+		]
+	},
+	"version": 1
+}

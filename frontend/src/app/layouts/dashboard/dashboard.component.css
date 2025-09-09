@@ -1,0 +1,138 @@
+/* Dashboard Layout Specific Styles */
+
+/* Ensure proper z-index layering */
+.sidebar {
+  z-index: 50;
+}
+
+.sidebar-overlay {
+  z-index: 40;
+}
+
+.header {
+  z-index: 30;
+}
+
+/* Smooth transitions for sidebar */
+.sidebar {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Mobile-specific sidebar positioning */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 320px;
+  }
+  
+  .sidebar.closed {
+    transform: translateX(-100%);
+  }
+}
+
+/* Desktop sidebar positioning */
+@media (min-width: 1024px) {
+  .sidebar {
+    position: relative;
+    transform: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Navigation Link Hover Effects */
+.nav-link {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-link:hover {
+  background-color: #f3f4f6;
+  color: #2563eb;
+}
+
+.nav-link.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-right: 3px solid #2563eb;
+}
+
+.nav-link.active .nav-icon {
+  color: #2563eb;
+}
+
+/* Header Shadow */
+.header {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* User Avatar Styles */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Focus States for Accessibility */
+.nav-link:focus-visible,
+button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  .sidebar .nav-link {
+    padding: 16px 16px;
+    font-size: 16px;
+  }
+  
+  .header h1 {
+    font-size: 18px;
+  }
+}
+
+/* Scrollbar Styling for Sidebar */
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

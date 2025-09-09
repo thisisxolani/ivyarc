@@ -88,6 +88,19 @@
             <artifactId>spring-cloud-starter-config</artifactId>
         </dependency>
 
+        <!-- OpenFeign for service-to-service calls -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- Resilience4j for Feign retries/circuit breakers/timeouts -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
         <!-- JWT Support -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -204,6 +217,14 @@
                     <user>auth_user</user>
                     <password>auth_password</password>
                 </configuration>
+            </plugin>
+            
+            <!-- Native image build support (optional) -->
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>0.10.2</version>
+                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>

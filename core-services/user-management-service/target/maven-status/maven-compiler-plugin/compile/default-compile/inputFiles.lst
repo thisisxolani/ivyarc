@@ -1,0 +1,6 @@
+/root/workspace/ivyarc/core-services/user-management-service/src/main/java/com/company/user/usermanagement/dto/UserProfileDto.java
+/root/workspace/ivyarc/core-services/user-management-service/src/main/java/com/company/user/usermanagement/entity/UserProfile.java
+/root/workspace/ivyarc/core-services/user-management-service/src/main/java/com/company/user/usermanagement/repository/UserProfileRepository.java
+/root/workspace/ivyarc/core-services/user-management-service/src/main/java/com/company/user/usermanagement/controller/UserProfileController.java
+/root/workspace/ivyarc/core-services/user-management-service/src/main/java/com/company/user/usermanagement/service/UserProfileService.java
+/root/workspace/ivyarc/core-services/user-management-service/src/main/java/com/company/user/usermanagement/UserManagementServiceApplication.java

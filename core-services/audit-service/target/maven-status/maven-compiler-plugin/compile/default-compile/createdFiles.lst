@@ -1,0 +1,7 @@
+com/company/audit/auditservice/dto/AuditEventDto.class
+com/company/audit/auditservice/AuditServiceApplication.class
+com/company/audit/auditservice/controller/AuditController.class
+com/company/audit/auditservice/service/AuditEventService.class
+com/company/audit/auditservice/repository/AuditEventRepository.class
+com/company/audit/auditservice/listener/AuditEventListener.class
+com/company/audit/auditservice/entity/AuditEvent.class

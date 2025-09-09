@@ -8,9 +8,9 @@ spring:
     allow-circular-references: true
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/auth_db
-    username: auth_user
-    password: auth_password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db:5432/auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:auth_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:auth_password}
     driver-class-name: org.postgresql.Driver
     
   jpa:
@@ -29,8 +29,8 @@ spring:
     baseline-on-migrate: true
     
   redis:
-    host: localhost
-    port: 6379
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
     timeout: 2000ms
     lettuce:
       pool:
@@ -51,7 +51,7 @@ spring:
             enable: false
 
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
   servlet:
     context-path: /
   forward-headers-strategy: native
@@ -59,7 +59,7 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://eureka-server:8761/eureka}
     fetch-registry: true
     register-with-eureka: true
   instance:

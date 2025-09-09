@@ -1,0 +1,21 @@
+# Runtime-only image copying prebuilt JAR
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+RUN addgroup -S spring && adduser -S spring -G spring
+
+ARG JAR_FILE=target/authorization-service-*.jar
+COPY ${JAR_FILE} app.jar
+
+USER spring:spring
+
+EXPOSE 8082
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget -qO- http://localhost:8082/actuator/health | grep '"status":"UP"' || exit 1
+
+ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75.0"
+
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]
+

@@ -1,0 +1,6 @@
+com/company/user/usermanagement/UserManagementServiceApplication.class
+com/company/user/usermanagement/service/UserProfileService.class
+com/company/user/usermanagement/dto/UserProfileDto.class
+com/company/user/usermanagement/controller/UserProfileController.class
+com/company/user/usermanagement/repository/UserProfileRepository.class
+com/company/user/usermanagement/entity/UserProfile.class

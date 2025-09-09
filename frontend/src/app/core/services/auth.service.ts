@@ -9,9 +9,9 @@ import {
   RefreshTokenRequest,
   AuthResponse,
   User,
-  ApiResponse,
   AuthState
 } from '../models/auth.models';
+import { ApiResponse } from '../models/api.models';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +51,12 @@ export class AuthService {
     const refreshToken = localStorage.getItem(this.REFRESH_TOKEN_KEY);
     const userStr = localStorage.getItem(this.USER_KEY);
 
+    console.log('AuthService - Initializing with tokens:', { 
+      hasAccessToken: !!accessToken, 
+      hasRefreshToken: !!refreshToken, 
+      hasUser: !!userStr 
+    });
+
     if (accessToken && refreshToken && userStr) {
       try {
         const user = JSON.parse(userStr) as User;
@@ -63,13 +69,26 @@ export class AuthService {
           error: null
         });
 
+        console.log('AuthService - Set authenticated state to true');
+
         // Validate token on initialization
         this.validateToken().subscribe({
           error: () => this.logout()
         });
       } catch {
+        console.log('AuthService - Error parsing stored auth data, clearing');
         this.clearAuthData();
       }
+    } else {
+      console.log('AuthService - No valid auth data found, setting unauthenticated');
+      this.updateAuthState({
+        isAuthenticated: false,
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+        loading: false,
+        error: null
+      });
     }
   }
 

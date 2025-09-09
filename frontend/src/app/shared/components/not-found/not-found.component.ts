@@ -5,6 +5,7 @@ import { ButtonComponent } from '../button/button.component';
 
 @Component({
   selector: 'app-not-found',
+  standalone: true,
   imports: [CommonModule, RouterLink, ButtonComponent],
   template: `
     <div class="min-h-screen bg-white px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">

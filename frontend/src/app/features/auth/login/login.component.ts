@@ -9,6 +9,7 @@ import { LoginRequest } from '../../../core/models/auth.models';
 
 @Component({
   selector: 'app-login',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, ButtonComponent, CardComponent],
   templateUrl: './login.component.html'
 })
