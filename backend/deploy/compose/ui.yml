@@ -21,6 +21,27 @@ services:
       - "${REDIS_COMMANDER_PORT:-8088}:8081"
     restart: unless-stopped
 
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: ivyarc-swagger-ui
+    ports:
+      - "${SWAGGER_UI_PORT:-8089}:8080"
+    volumes:
+      - ./swagger/swagger-initializer.js:/usr/share/nginx/html/swagger-initializer.js:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  headlamp:
+    image: ghcr.io/headlamp-k8s/headlamp:latest
+    container_name: ivyarc-headlamp
+    ports:
+      - "${HEADLAMP_PORT:-4466}:4466"
+    environment:
+      - HEADLAMP_KUBECONFIG_PATHS=/root/.kube/config
+    volumes:
+      - ~/.kube:/root/.kube:ro
+    restart: unless-stopped
+
 # Note: RabbitMQ provides its own management UI at the broker's management port.
 # Connect directly to your RabbitMQ host (not proxied here).
-

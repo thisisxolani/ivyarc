@@ -36,8 +36,7 @@ server:
 
 eureka:
   client:
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://eureka-server:8761/eureka}
+    enabled: false
     fetch-registry: true
     register-with-eureka: true
   instance:
@@ -85,6 +84,22 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: method
+
+resilience4j:
+  retry:
+    instances:
+      default:
+        maxAttempts: 3
+        waitDuration: 200ms
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+  timelimiter:
+    instances:
+      default:
+        timeoutDuration: 3s
 
 ---
 spring:

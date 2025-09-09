@@ -74,6 +74,7 @@ public class SecurityConfig {
                         
                         // Eureka registration (if needed)
                         .requestMatchers("/eureka/**").permitAll()
+                        .requestMatchers("/internal/**").permitAll()
                         
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
@@ -103,6 +104,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html", "/swagger-resources/**", 
                                 "/webjars/**").permitAll()
                         .requestMatchers("/eureka/**").permitAll()
+                        .requestMatchers("/internal/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

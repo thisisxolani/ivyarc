@@ -1,27 +1,6 @@
 version: "3.8"
 
 services:
-  eureka-server:
-    build:
-      context: ../../../infrastructure/service-discovery
-    container_name: ivyarc-eureka-server
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
-      SERVER_PORT: 8761
-      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
-      EUREKA_CLIENT_FETCH_REGISTRY: "false"
-      EUREKA_SERVER_ENABLE_SELF_PRESERVATION: "false"
-      EUREKA_CLIENT_ENABLED: "false"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    networks:
-      - ivyarc
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 
   api-gateway:
@@ -31,14 +10,23 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8080
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ""
       SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-}
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
       SPRING_REDIS_HOST: ${REDIS_HOST}
       SPRING_REDIS_PORT: ${REDIS_PORT:-6379}
+      EUREKA_CLIENT_ENABLED: "false"
+      MANAGEMENT_HEALTH_REDIS_ENABLED: "false"
+      SPRING_CLOUD_GATEWAY_ROUTES_0_ID: auth
+      SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://auth-service:8081
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: Path=/auth-service/**
+      SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0: StripPrefix=1
+      SPRING_CLOUD_GATEWAY_ROUTES_1_ID: authorization
+      SPRING_CLOUD_GATEWAY_ROUTES_1_URI: http://authorization-service:8082
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: Path=/authorization-service/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0: StripPrefix=1
       ZIPKIN_BASE_URL: ${ZIPKIN_BASE_URL:-}
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+    depends_on: {}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -59,8 +47,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8081
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ""
+      SPRING_CLOUD_CONFIG_URI: ""
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
       SPRING_DATASOURCE_URL: ${AUTH_DATABASE_URL}
       SPRING_DATASOURCE_USERNAME: ${AUTH_DATABASE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${AUTH_DATABASE_PASSWORD}
@@ -68,9 +57,8 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES}
       JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+      EUREKA_CLIENT_ENABLED: "false"
+    depends_on: {}
     networks:
       - ivyarc
     extra_hosts:
@@ -83,8 +71,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8082
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ""
+      SPRING_CLOUD_CONFIG_URI: ""
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
       SPRING_DATASOURCE_URL: ${AUTHZ_DATABASE_URL}
       SPRING_DATASOURCE_USERNAME: ${AUTHZ_DATABASE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${AUTHZ_DATABASE_PASSWORD}
@@ -92,9 +81,8 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES}
       JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+      EUREKA_CLIENT_ENABLED: "false"
+    depends_on: {}
     networks:
       - ivyarc
     extra_hosts:
@@ -107,17 +95,17 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8083
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ""
+      SPRING_CLOUD_CONFIG_URI: ""
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
       SPRING_DATASOURCE_URL: ${USER_DATABASE_URL}
       SPRING_DATASOURCE_USERNAME: ${USER_DATABASE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${USER_DATABASE_PASSWORD}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT:-6379}
       SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES}
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+      EUREKA_CLIENT_ENABLED: "false"
+    depends_on: {}
     networks:
       - ivyarc
     extra_hosts:
@@ -130,15 +118,15 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8084
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ""
+      SPRING_CLOUD_CONFIG_URI: ""
+      SPRING_CLOUD_CONFIG_ENABLED: "false"
       SPRING_DATASOURCE_URL: ${AUDIT_DATABASE_URL}
       SPRING_DATASOURCE_USERNAME: ${AUDIT_DATABASE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${AUDIT_DATABASE_PASSWORD}
       SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES}
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+      EUREKA_CLIENT_ENABLED: "false"
+    depends_on: {}
     networks:
       - ivyarc
     extra_hosts:

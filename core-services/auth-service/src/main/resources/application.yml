@@ -58,10 +58,7 @@ server:
 
 eureka:
   client:
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://eureka-server:8761/eureka}
-    fetch-registry: true
-    register-with-eureka: true
+    enabled: false
   instance:
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 10
@@ -83,6 +80,31 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+spring:
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            authorization-service:
+              - uri: http://authorization-service:8082
+
+resilience4j:
+  retry:
+    instances:
+      authorizationClient:
+        maxAttempts: 3
+        waitDuration: 200ms
+  circuitbreaker:
+    instances:
+      authorizationClient:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+  timelimiter:
+    instances:
+      default:
+        timeoutDuration: 3s
 
 logging:
   level:

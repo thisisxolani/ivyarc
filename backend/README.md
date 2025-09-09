@@ -56,6 +56,27 @@ docker compose -f base.yml up -d --build
 
 Only the API Gateway publishes a port (`8080`). All other services communicate on the internal network via Eureka.
 
+## Service Access via Gateway
+
+- Internal service routes are exposed for convenience:
+  - `http://localhost:8080/auth-service/**` → Auth Service
+  - `http://localhost:8080/authorization-service/**` → Authorization Service
+  - `http://localhost:8080/user-management-service/**` → User Management
+  - `http://localhost:8080/audit-service/**` → Audit Service
+
+## Unified Swagger UI
+
+- Start the UI bundle:
+  - `docker compose -f ui.yml up -d`
+- Visit Swagger UI: `http://localhost:8089`
+  - Aggregates API docs from all services through the Gateway.
+
+## Kubernetes UI (MicroK8s friendly)
+
+- Headlamp is included in `ui.yml` (port `4466`). It requires a valid kubeconfig mounted from `~/.kube`.
+- Run: `docker compose -f ui.yml up -d headlamp`
+- Access: `http://localhost:4466` and select your kubeconfig context.
+
 ## Health
 
 - Eureka: `http://localhost:8761`
@@ -71,4 +92,3 @@ Each service POM includes the GraalVM native build plugin. You can produce nativ
 
 - All previous Dockerized persistent stores and their bind-mounts are deprecated and removed from this deployment path. Use managed cloud services.
 - Service-to-service calls must use Feign interfaces and service IDs, not hard-coded URLs/ports.
-

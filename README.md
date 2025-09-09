@@ -21,11 +21,32 @@ This repository contains a refactored backend and a separate frontend. The backe
 - Start services:
   - `cd backend/deploy/compose`
   - `cp .env.example .env` and edit values (temporary: admin/admin123)
-  - `docker-compose -f base.yml up -d --build`
+  - Permanent stores installed on this server (apt):
+    - Postgres 16: role `admin` / `admin123`; DBs: auth_db, authorization_db, user_management_db, audit_db
+    - Redis 7: localhost:6379
+    - RabbitMQ 3.12: vhost `ivyarc`; user `admin` / `admin123`
+  - The `.env` is preconfigured to use `host.docker.internal` to reach these from containers.
+  - `docker compose -f base.yml up -d --build`
 - Start UIs for stores (optional):
-  - `docker-compose -f ui.yml up -d` (pgAdmin at `:5050`, Redis Commander at `:8088`)
+  - `docker compose -f ui.yml up -d` (pgAdmin at `:5050`, Redis Commander at `:8088`)
 
-Only API Gateway exposes a port (`8080`). All service-to-service calls use Eureka + OpenFeign; no static port wiring.
+Only API Gateway exposes a port (`8080`). Internal service routes are available for convenience:
+- `http://localhost:8080/auth-service/**` → Auth Service
+- `http://localhost:8080/authorization-service/**` → Authorization Service
+- `http://localhost:8080/user-management-service/**` → User Management
+- `http://localhost:8080/audit-service/**` → Audit Service
+
+Health checks:
+- Gateway: `http://localhost:8080/actuator/health`
+- Per-service: `http://localhost:8080/<service>/actuator/health`
+
+Unified Swagger UI:
+- `docker compose -f ui.yml up -d swagger-ui`
+- Visit `http://localhost:8089` (aggregates all service docs through Gateway)
+
+Kubernetes UI (Headlamp, microk8s-friendly):
+- `docker compose -f ui.yml up -d headlamp`
+- Visit `http://localhost:4466` (mounts `~/.kube/config`)
 
 ## Frontend
 

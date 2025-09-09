@@ -8,11 +8,36 @@ spring:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
     
   cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            auth-service:
+              - uri: http://auth-service:8081
+            authorization-service:
+              - uri: http://authorization-service:8082
+            user-management-service:
+              - uri: http://user-management-service:8083
+            audit-service:
+              - uri: http://audit-service:8084
     gateway:
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
+      routes:
+        - id: auth-internal
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth-service/**
+          filters:
+            - StripPrefix=1
+        - id: authorization-internal
+          uri: http://authorization-service:8082
+          predicates:
+            - Path=/authorization-service/**
+          filters:
+            - StripPrefix=1
       
       globalcors:
         cors-configurations:
@@ -34,22 +59,12 @@ spring:
             maxAge: 3600
 
 server:
-  port: ${PORT:8082}
+  port: ${PORT:8080}
   forward-headers-strategy: native
 
 eureka:
-  instance:
-    prefer-ip-address: ${EUREKA_PREFER_IP:false}
-    lease-renewal-interval-in-seconds: 30
-    lease-expiration-duration-in-seconds: 90
-    metadata-map:
-      version: 1.0.0
-      environment: ${spring.profiles.active}
-  
   client:
-    service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
-    registry-fetch-interval-seconds: 30
+    enabled: false
 
 management:
   endpoints:
@@ -103,3 +118,8 @@ management.tracing:
   zipkin:
     tracing:
       endpoint: ${ZIPKIN_URL:http://localhost:9411/api/v2/spans}
+
+spring:
+  redis:
+    host: ${SPRING_REDIS_HOST:${REDIS_HOST:localhost}}
+    port: ${SPRING_REDIS_PORT:${REDIS_PORT:6379}}
