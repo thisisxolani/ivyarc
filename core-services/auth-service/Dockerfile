@@ -3,8 +3,8 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
+# Install wget for healthcheck and create non-root user
+RUN apk add --no-cache wget && addgroup -S spring && adduser -S spring -G spring
 
 # Copy built jar
 ARG JAR_FILE=target/auth-service-*.jar
@@ -20,4 +20,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75.0"
 
 ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]
-

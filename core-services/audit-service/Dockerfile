@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN apk add --no-cache wget && addgroup -S spring && adduser -S spring -G spring
 
 ARG JAR_FILE=target/audit-service-*.jar
 COPY ${JAR_FILE} app.jar
@@ -18,4 +18,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75.0"
 
 ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]
-

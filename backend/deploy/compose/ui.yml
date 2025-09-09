@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4:8.8
+    container_name: ivyarc-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-changeme}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    restart: unless-stopped
+
+  redis-commander:
+    image: ghcr.io/joeferner/redis-commander:latest
+    container_name: ivyarc-redis-commander
+    environment:
+      # Format: name:host:port[:password]
+      REDIS_HOSTS: ${REDIS_COMMANDER_HOSTS:-prod:${REDIS_HOST:-redis-host}:${REDIS_PORT:-6379}:${REDIS_PASSWORD:-}}
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8088}:8081"
+    restart: unless-stopped
+
+# Note: RabbitMQ provides its own management UI at the broker's management port.
+# Connect directly to your RabbitMQ host (not proxied here).
+

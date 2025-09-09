@@ -3,11 +3,15 @@ version: "3.8"
 services:
   eureka-server:
     build:
-      context: ../../infrastructure/service-discovery
+      context: ../../../infrastructure/service-discovery
     container_name: ivyarc-eureka-server
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      EUREKA_SERVER_ENABLE_SELF_PRESERVATION: "false"
+      EUREKA_CLIENT_ENABLED: "false"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
       interval: 30s
@@ -16,45 +20,24 @@ services:
       start_period: 60s
     networks:
       - ivyarc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-  config-server:
-    build:
-      context: ../../infrastructure/config-server
-    container_name: ivyarc-config-server
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
-      SERVER_PORT: 8888
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
-      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_SERVER_GIT_URI}
-      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${CONFIG_SERVER_GIT_USERNAME}
-      SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${CONFIG_SERVER_GIT_PASSWORD}
-      SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: ${CONFIG_SERVER_GIT_BRANCH:-main}
-    depends_on:
-      eureka-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    networks:
-      - ivyarc
 
   api-gateway:
     build:
-      context: ../../infrastructure/api-gateway
+      context: ../../../infrastructure/api-gateway
     container_name: ivyarc-api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
       SERVER_PORT: 8080
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT:-6379}
       ZIPKIN_BASE_URL: ${ZIPKIN_BASE_URL:-}
     depends_on:
       eureka-server:
-        condition: service_healthy
-      config-server:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -66,10 +49,12 @@ services:
       - "${API_GATEWAY_PORT:-8080}:8080"
     networks:
       - ivyarc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   auth-service:
     build:
-      context: ../../core-services/auth-service
+      context: ../../../core-services/auth-service
     container_name: ivyarc-auth-service
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
@@ -86,14 +71,14 @@ services:
     depends_on:
       eureka-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
     networks:
       - ivyarc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   authorization-service:
     build:
-      context: ../../core-services/authorization-service
+      context: ../../../core-services/authorization-service
     container_name: ivyarc-authorization-service
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
@@ -110,14 +95,14 @@ services:
     depends_on:
       eureka-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
     networks:
       - ivyarc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   user-management-service:
     build:
-      context: ../../core-services/user-management-service
+      context: ../../../core-services/user-management-service
     container_name: ivyarc-user-management-service
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
@@ -133,14 +118,14 @@ services:
     depends_on:
       eureka-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
     networks:
       - ivyarc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   audit-service:
     build:
-      context: ../../core-services/audit-service
+      context: ../../../core-services/audit-service
     container_name: ivyarc-audit-service
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
@@ -154,12 +139,11 @@ services:
     depends_on:
       eureka-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
     networks:
       - ivyarc
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   ivyarc:
     driver: bridge
-
