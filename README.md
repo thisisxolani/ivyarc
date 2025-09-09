@@ -1,100 +1,37 @@
-# Spring Cloud Native Auth Flow Microservices Architecture
+# IvyArc
 
-## Overview
-This workspace contains a production-ready Spring Cloud microservices architecture implementing authentication, authorization, and role-based API gateway functionality. The system is designed for scalability, fault tolerance, and easy integration of new microservices.
+This repository contains a refactored backend and a separate frontend. The backend is cloud‑native, discovery‑based, and does not run persistent data stores in Docker. All stateful dependencies are external (managed) and configured via environment.
 
-## Architecture Components
+## Structure
 
-### Core Services
-- **API Gateway** - Edge service with rate limiting and routing
-- **Service Discovery** - Eureka server for dynamic service registration
-- **Configuration Server** - Centralized configuration management
-- **Authentication Service** - JWT/OAuth2 authentication
-- **Authorization Service** - Role-based access control (RBAC)
-- **User Management Service** - User CRUD operations
-- **Audit Service** - Security and activity logging
+- `backend/` — deployment and docs for the refactored backend
+  - Services code remains in `infrastructure/` (Eureka, Config, Gateway) and `core-services/` (auth, authorization, user-management, audit)
+  - Compose files under `backend/deploy/compose/`
+  - Docs under `backend/docs/`
+- `infrastructure/` — Spring Boot infrastructure services
+- `core-services/` — Spring Boot core microservices
+- `frontend/` — Angular application (frontend README covers only frontend specifics)
 
-### Infrastructure Services
-- **Monitoring Service** - Metrics and health checks
-- **Tracing Service** - Distributed tracing
-- **Notification Service** - Email/SMS notifications
+## Backend (prod-like)
 
-## Technology Stack
-- **Spring Boot 3.2+**
-- **Spring Cloud 2023.0.x**
-- **Spring Security 6+**
-- **Spring Data JPA/JDBC**
-- **PostgreSQL** (primary database)
-- **Redis** (caching and sessions)
-- **RabbitMQ** (async messaging)
-- **Prometheus** (metrics)
-- **Zipkin** (tracing)
-- **Docker** (containerization)
+1) Build service JARs (from repo root) and start the stack using external stores configured in `.env` next to the compose file:
 
-## Project Structure
-```
-spring-cloud-auth-workspace/
-├── infrastructure/
-│   ├── service-discovery/          # Eureka Server
-│   ├── config-server/              # Spring Cloud Config
-│   ├── api-gateway/                # Spring Cloud Gateway
-│   └── monitoring/                 # Prometheus & Grafana setup
-├── core-services/
-│   ├── auth-service/               # Authentication Service
-│   ├── authorization-service/      # RBAC Service
-│   ├── user-service/               # User Management
-│   └── audit-service/              # Audit & Logging
-├── support-services/
-│   ├── notification-service/       # Notifications
-│   └── file-service/               # File management
-├── shared/
-│   ├── common-lib/                 # Shared utilities
-│   ├── security-lib/               # Security components
-│   └── dto-lib/                    # Data Transfer Objects
-├── frontend/
-│   ├── admin-dashboard/            # React Admin UI
-│   ├── user-portal/                # User-facing UI
-│   └── api-docs/                   # OpenAPI documentation
-├── tests/
-│   ├── integration-tests/          # Cross-service tests
-│   ├── contract-tests/             # Pact consumer/provider
-│   └── performance-tests/          # Load testing
-├── deployment/
-│   ├── docker-compose/             # Local development
-│   ├── kubernetes/                 # K8s manifests
-│   └── terraform/                  # Infrastructure as Code
-└── docs/
-    ├── api/                        # API documentation
-    ├── architecture/               # Architecture diagrams
-    └── deployment/                 # Deployment guides
-```
+- Build JARs:
+  - See instructions in `backend/README.md` (uses Maven to package all services)
+- Start services:
+  - `cd backend/deploy/compose`
+  - `cp .env.example .env` and edit values (temporary: admin/admin123)
+  - `docker-compose -f base.yml up -d --build`
+- Start UIs for stores (optional):
+  - `docker-compose -f ui.yml up -d` (pgAdmin at `:5050`, Redis Commander at `:8088`)
 
-## Getting Started
-1. Run `./scripts/setup-local.sh` to start all services locally
-2. Access API Gateway at `http://localhost:8080`
-3. View service discovery at `http://localhost:8761`
-4. Monitor metrics at `http://localhost:9090`
+Only API Gateway exposes a port (`8080`). All service-to-service calls use Eureka + OpenFeign; no static port wiring.
 
-## Service Endpoints
-- **API Gateway**: `:8080`
-- **Eureka Server**: `:8761`
-- **Config Server**: `:8888`
-- **Auth Service**: `:8081`
-- **Authorization Service**: `:8082`
-- **User Service**: `:8083`
-- **Audit Service**: `:8084`
+## Frontend
 
-## Security Model
-- **JWT Tokens** for stateless authentication
-- **Role-Based Access Control** with fine-grained permissions
-- **OAuth2** integration for third-party authentication
-- **Rate Limiting** per user/IP/endpoint
-- **Audit Logging** for all security events
+See `frontend/README.md` for development and build instructions. Configure API base URLs via environment files or runtime config; this README does not describe backend setup.
 
-## API Versioning
-All APIs follow the versioning pattern: `/api/v1/`, `/api/v2/`
+## Notes
 
-## Documentation
-- OpenAPI 3.0 specifications for all services
-- Interactive API documentation available at `/swagger-ui`
-- Architecture decision records in `/docs/architecture/`
+- Persistent Docker stores and legacy local-infra compose files have been removed. Use managed Postgres/Redis/RabbitMQ and configure endpoints via env.
+- Secrets in compose `.env` are gitignored and intended for development; replace them for real environments.
